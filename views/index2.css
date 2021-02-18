@@ -1,0 +1,28 @@
+img.safe-image {
+    height: 300px;
+}
+
+.header {
+    display: grid;
+}
+
+span.address {
+    color: red;
+    margin-bottom: 15px;
+    padding-top: 5px;
+    font-size: larger;
+}
+
+.parameter {
+    color: blue;
+    font-size: larger;
+}
+
+.creation-box {
+    display: grid;
+}
+
+button {
+    max-width: fit-content;
+}
+

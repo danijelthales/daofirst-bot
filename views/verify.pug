@@ -1,26 +1,30 @@
 html
     head
         title= "Create safe"
+        style
+            include index2.css
     body
-        span(id="address")=""
-        div
-            span Squad &nbsp;
-            span(id="squad")=squad
-        div
-            span Consensus &nbsp;
-            span(id="squad")=consensus
-        div
-            span Signers
-            ul
-                each signer in signers
-                    li=signer
-        h1= "You can start your safe creation transaction here"
-        div
-                    button(title="submit" name="submit" value="submit" onclick="createSafe()") submit
+        div(class="header")
+            span(id="address" class="address")=""
+        div(class="param-box")
+            div
+                span Squad &nbsp;
+                span(id="squad" class="parameter")=squad
+            div
+                span Consensus &nbsp;
+                span(id="consensus" class="parameter")=consensus
+            div
+                span Signers
+                ul
+                    each signer in signers
+                        li(class="parameter")=signer
+        div(class="creation-box")
+            button(title="submit" name="submit" value="submit" onclick="createSafe()") CREATE SAFE
+            img(src="https://pngimg.com/uploads/safe/safe_PNG33.png" class="safe-image")
 script.
-  var consensus = '#{consensus}';
-  var squad = '#{squad}';
-  var signers = '#{signers}';
+    var consensus = '#{consensus}';
+    var squad = '#{squad}';
+    var signers = '#{signers}';
 
 script(src="/web3.min.js")
 script(src="/verify.js")

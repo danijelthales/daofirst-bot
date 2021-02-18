@@ -39,9 +39,13 @@ router.post("/safetx", async (req, res) => {
             let squadname = req.body.value.squad;
             guild.channels.cache.forEach(function (value, key) {
                     if (value.name == squadname) {
-                        let squad = JSON.parse(value.topic);
+                        let squad = squadNameToSquadsMap.get(value.name);
                         squad.tx = tx;
-                        value.setTopic(JSON.stringify(squad)).then(value.send("Listening to safe creation tx with hash: `" + tx + "`"));
+                        if (process.env.REDIS_URL) {
+                            redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                            });
+                        }
+                        value.send("Listening to safe creation tx with hash: `" + tx + "`");
                     }
                 }
             );
@@ -55,10 +59,6 @@ app.use("/", router);
 app.listen(process.env.PORT || 3000, () => {
     console.log("Server running on port " + (process.env.PORT || 3000));
 });
-
-//
-// const {SynthetixJs} = require('synthetix-js');
-// const snxjs = new SynthetixJs(); //uses default ContractSettings - ethers.js default provider, mainnet
 
 function getNumberLabel(labelValue) {
 
@@ -96,6 +96,7 @@ let redisClient = null;
 var fs = require('fs');
 
 var usersToWalletsMap = new Map();
+var squadNameToSquadsMap = new Map();
 
 const Squad = class {
     name;
@@ -119,6 +120,15 @@ if (process.env.REDIS_URL) {
         if (usersToWalletsMapRaw) {
             usersToWalletsMap = new Map(JSON.parse(usersToWalletsMapRaw));
             console.log("usersToWalletsMap:" + usersToWalletsMap);
+        }
+    });
+
+    redisClient.get("squadNameToSquadsMap", function (err, obj) {
+        squadNameToSquadsMapRaw = obj;
+        console.log("squadNameToSquadsMapRaw:" + squadNameToSquadsMapRaw);
+        if (squadNameToSquadsMapRaw) {
+            squadNameToSquadsMap = new Map(JSON.parse(squadNameToSquadsMapRaw));
+            console.log("squadNameToSquadsMap:" + squadNameToSquadsMap);
         }
     });
 
@@ -161,6 +171,11 @@ client.on("message", msg => {
                 squad.consensus = 1;
                 squad.members = [];
                 squad.members.push(msg.author.id);
+                squadNameToSquadsMap.set(squadName, squad);
+                if (process.env.REDIS_URL) {
+                    redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                    });
+                }
 
                 var found = false;
                 var parentChannel = null;
@@ -177,7 +192,6 @@ client.on("message", msg => {
                     }).then(function (c) {
                         guild.channels.create(squadName, {
                             reason: "create a new squad",
-                            topic: JSON.stringify(squad),
                             parent: c
                         })
                             .then(function (cnew) {
@@ -199,7 +213,6 @@ client.on("message", msg => {
                 } else {
                     guild.channels.create(squadName, {
                         reason: "create a new squad",
-                        topic: JSON.stringify(squad),
                         parent: parentChannel
                     })
                         .then(function (cnew) {
@@ -223,10 +236,7 @@ client.on("message", msg => {
 
             if (msg.content.toLowerCase().trim().startsWith("!addmember")) {
                 try {
-                    const args = msg.content.toLowerCase().trim().replace(/ +(?= )/g, '').slice("!addmember".length).split(' ');
-                    args.shift();
-                    const member = args.shift().trim();
-                    var memberid = member.substring(3, 21);
+
                     var squadrole = null;
                     guild.roles.cache.forEach(function (value, key) {
                             if (value.name == msg.channel.name) {
@@ -234,12 +244,31 @@ client.on("message", msg => {
                             }
                         }
                     );
+                    if (squadrole == null) {
+                        msg.channel.send("This is not a squad channel.");
+                        return;
+                    }
+
+                    var userIsInSquad = msg.member.roles.cache.find(r => r.name === squadrole.name) != null;
+
+                    if (!userIsInSquad) {
+                        msg.channel.send("Command can only be used by squad members!");
+                        return;
+                    }
+
+                    const args = msg.content.toLowerCase().trim().replace(/ +(?= )/g, '').slice("!addmember".length).split(' ');
+                    args.shift();
+                    const member = args.shift().trim();
+                    var memberid = member.substring(3, 21);
                     if (squadrole) {
                         guild.members.fetch(memberid).then(function (m) {
                             m.roles.add(squadrole);
-                            let squad = JSON.parse(msg.channel.topic);
+                            let squad = squadNameToSquadsMap.get(msg.channel.name);
                             squad.members.push(memberid);
-                            msg.channel.setTopic(JSON.stringify(squad));
+                            if (process.env.REDIS_URL) {
+                                redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                });
+                            }
                             msg.channel.send(member + " added to the squad.");
                         }).catch(console.error)
                     } else {
@@ -261,6 +290,10 @@ client.on("message", msg => {
                         return;
                     }
                     usersToWalletsMap.set(msg.author.id, wallet);
+                    if (process.env.REDIS_URL) {
+                        redisClient.set("usersToWalletsMap", JSON.stringify([...usersToWalletsMap]), function () {
+                        });
+                    }
                     msg.reply("your account has been set.");
 
                 } catch (e) {
@@ -270,13 +303,7 @@ client.on("message", msg => {
 
             if (msg.content.toLowerCase().trim().startsWith("!setconsensus")) {
                 try {
-                    const args = msg.content.toLowerCase().trim().replace(/ +(?= )/g, '').slice("!setconsensus".length).split(' ');
-                    args.shift();
-                    const consensus = args.shift().trim();
-                    if (isNaN(consensus)) {
-                        msg.channel.send("That is not a proper consensus number.");
-                        return;
-                    }
+
                     var squadrole = null;
                     guild.roles.cache.forEach(function (value, key) {
                             if (value.name == msg.channel.name) {
@@ -289,11 +316,34 @@ client.on("message", msg => {
                         return;
                     }
 
+                    var userIsInSquad = msg.member.roles.cache.find(r => r.name === squadrole.name) != null;
 
-                    let squad = JSON.parse(msg.channel.topic);
+                    if (!userIsInSquad) {
+                        msg.channel.send("Command can only be used by squad members!");
+                        return;
+                    }
+
+                    const args = msg.content.toLowerCase().trim().replace(/ +(?= )/g, '').slice("!setconsensus".length).split(' ');
+                    args.shift();
+                    const consensus = args.shift().trim();
+                    if (isNaN(consensus)) {
+                        msg.channel.send("That is not a proper consensus number.");
+                        return;
+                    }
+
+                    let squad = squadNameToSquadsMap.get(msg.channel.name);
+                    if (squad.members.length < consensus) {
+                        msg.channel.send("Consensus can't be higher than the number of members in the squad.");
+                        return;
+                    }
+
+
                     squad.consensus = consensus;
-                    msg.channel.setTopic(JSON.stringify(squad));
-                    msg.channel.send("Squad multisig consensus has been set to " + consensus);
+                    if (process.env.REDIS_URL) {
+                        redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                        });
+                    }
+                    msg.channel.send("Squad multisig consensus has been set to " + consensus + ".");
 
                 } catch (e) {
                     msg.channel.send("Something went wrong. Please make sure you provided a valid wallet.");
@@ -313,7 +363,14 @@ client.on("message", msg => {
                         msg.channel.send("This is not a squad channel.");
                         return;
                     }
-                    let squad = JSON.parse(msg.channel.topic);
+
+                    var userIsInSquad = msg.member.roles.cache.find(r => r.name === squadrole.name) != null;
+
+                    if (!userIsInSquad) {
+                        msg.channel.send("Command can only be used by squad members!");
+                        return;
+                    }
+                    let squad = squadNameToSquadsMap.get(msg.channel.name);
                     if (squad.safe) {
                         msg.channel.send("Squad already has a safe. Use *!setSafe safeAddress* if you want to set a new safe address.");
                         return;
@@ -329,7 +386,7 @@ client.on("message", msg => {
                             memberOfSafe.name = guild.members.cache.get(m).user.username;
                             if (!usersToWalletsMap.has(m)) {
                                 msg.channel.send("***" +
-                                    memberOfSafe.name + "*** does not have an assigned wallet. All squad members must have wallets assigned for a safe to be created. Use !setWallet from the corresponding discord account to assign wallet."
+                                    memberOfSafe.name + "*** does not have an assigned wallet. All squad members must have wallets assigned for a safe to be created. Use *!setWallet* from the corresponding discord account to assign wallet."
                                 )
                                 proceed = false;
                                 return;
@@ -360,6 +417,110 @@ client.on("message", msg => {
                 }
             }
 
+
+            if (msg.content.toLowerCase().trim().startsWith("!squad")) {
+                try {
+                    var squadrole = null;
+                    guild.roles.cache.forEach(function (value, key) {
+                            if (value.name == msg.channel.name) {
+                                squadrole = value;
+                            }
+                        }
+                    );
+                    if (squadrole == null) {
+                        msg.channel.send("This is not a squad channel.");
+                        return;
+                    }
+                    let squad = squadNameToSquadsMap.get(msg.channel.name);
+
+                    const exampleEmbed = new Discord.MessageEmbed()
+                        .setColor('#0099ff')
+                        .setTitle('Squad');
+                    let membersOfSafe = [];
+                    let messageOfMembersOfSafe = "";
+                    squad.members.forEach(m => {
+                        let memberOfSafe = new Object();
+                        memberOfSafe.name = guild.members.cache.get(m).user.username;
+                        let userwallet = usersToWalletsMap.get(m);
+                        memberOfSafe.wallet = userwallet != null ? userwallet : "";
+                        membersOfSafe.push(memberOfSafe);
+                        messageOfMembersOfSafe += memberOfSafe.name + " " + memberOfSafe.wallet + "\n";
+                    });
+                    exampleEmbed.addField("Name", squad.name);
+                    exampleEmbed.addField("Members", messageOfMembersOfSafe);
+                    exampleEmbed.addField("Consensus", squad.consensus);
+                    exampleEmbed.addField("Safe", "[" + squad.safe + "](" + process.env.APP_LINK + ")");
+                    msg.channel.send(exampleEmbed);
+
+
+                } catch (e) {
+                    msg.channel.send("Something went wrong.");
+                    console.log(e);
+                }
+            }
+
+            if (msg.content.toLowerCase().trim().startsWith("!setsafe")) {
+                try {
+
+                    var squadrole = null;
+                    guild.roles.cache.forEach(function (value, key) {
+                            if (value.name == msg.channel.name) {
+                                squadrole = value;
+                            }
+                        }
+                    );
+                    if (squadrole == null) {
+                        msg.channel.send("This is not a squad channel.");
+                        return;
+                    }
+
+                    var userIsInSquad = msg.member.roles.cache.find(r => r.name === squadrole.name) != null;
+
+                    if (!userIsInSquad) {
+                        msg.channel.send("Command can only be used by squad members!");
+                        return;
+                    }
+
+                    const args = msg.content.toLowerCase().trim().replace(/ +(?= )/g, '').slice("!setsafe".length).split(' ');
+                    args.shift();
+                    const safe = args.shift().trim();
+                    if (!safe.startsWith("0x") || safe.length != 42) {
+                        msg.channel.send("That is not a proper ETH safe address.");
+                        return;
+                    }
+
+                    let squad = squadNameToSquadsMap.get(msg.channel.name);
+                    squad.safe = safe;
+                    if (process.env.REDIS_URL) {
+                        redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                        });
+                    }
+                    msg.channel.send("Safe address has been updated for your squad.");
+
+                } catch (e) {
+                    msg.channel.send("Something went wrong. Please make sure you provided a valid safe.");
+                }
+            }
+
+
+            if (msg.content.toLowerCase().trim().startsWith("!help")) {
+                const exampleEmbed = new Discord.MessageEmbed()
+                    .setColor('#0099ff')
+                    .setTitle('DaoFirst bot');
+
+                exampleEmbed.setDescription('List of commands:');
+                exampleEmbed.addField("!createSquad squadName", "Creates a new squad, assigns it a channel and discord role. Adds the creators as the squad member.");
+                exampleEmbed.addField("!addMember taggedUser", "Adds tagged user to the squad. To be used in the squad channel.");
+                exampleEmbed.addField("!setWallet walletAddress", "Assigns walletAddress to the discord user.");
+                exampleEmbed.addField("!setConsensus", "Sets the squad multisig consensus. To be used in squad channel.");
+                exampleEmbed.addField("!initSafe", "Prepares a transaction to create a Gnosis multisig safe for squad members. Sends back a link where the transaction can be started by squad members.");
+                exampleEmbed.addField("!setSafe safeAddress", "Replaces squad safe address");
+                exampleEmbed.addField("!squad ",
+                    "Shows squad details.");
+
+                msg.reply(exampleEmbed);
+            }
+
         }
 
 
@@ -388,13 +549,22 @@ function checkReceipt(hash, cb) {
 setInterval(function () {
     guild.channels.cache.forEach(function (value, key) {
             if (value.parent && value.parent.name == "squads") {
-                let squad = JSON.parse(value.topic);
+                let squad = squadNameToSquadsMap.get(value.name);
                 if (squad.safe == null && squad.tx) {
                     var tx = squad.tx;
                     checkReceipt(tx, function (receipt) {
                         var safe = "0x" + receipt.logs[0].data.substring(26);
                         squad.safe = safe;
-                        value.setTopic(JSON.stringify(squad)).then(value.send("Your safe has now been initialized with the address:`" + safe + "`"));
+                        if (process.env.REDIS_URL) {
+                            redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                            });
+                        }
+                        const exampleEmbed = new Discord.MessageEmbed()
+                            .setColor('#0099ff')
+                            .setTitle('Safe').setDescription("Your safe has been initialized.");
+                        exampleEmbed.addField("Address", safe);
+                        exampleEmbed.addField("App", "[gnosis](" + process.env.APP_LINK + ")");
+                        value.send(exampleEmbed);
                     })
 
                 }

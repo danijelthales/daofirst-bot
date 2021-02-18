@@ -22,10 +22,6 @@ router.get('/finish.js', function (req, res) {
     res.sendFile(path.join(__dirname + '/finish.js'));
 });
 
-router.get('/rebatesFinish.js', function (req, res) {
-    res.sendFile(path.join(__dirname + '/rebatesFinish.js'));
-});
-
 router.get('/verify.js', function (req, res) {
     res.sendFile(path.join(__dirname + '/verify.js'));
 });
@@ -45,7 +41,7 @@ router.post("/safetx", async (req, res) => {
                     if (value.name == squadname) {
                         let squad = JSON.parse(value.topic);
                         squad.tx = tx;
-                        value.setTopic(JSON.stringify(squad));
+                        value.setTopic(JSON.stringify(squad)).then(value.send("Listening to safe creation tx with hash: `" + tx + "`"));
                     }
                 }
             );
@@ -347,14 +343,20 @@ client.on("message", msg => {
                             exampleEmbed.addField("Init safe", "A gnosis safe transaction has been prepared for you with the parameters below.");
                             exampleEmbed.addField("Signers", messageOfMembersOfSafe);
                             exampleEmbed.addField("Consensus", squad.consensus);
-                            exampleEmbed.addField("Link", "You can start the safe creation [here](http://localhost:3000/createsafe)");
+                            var link = process.env.LINK;
+                            link += "/" + squad.name + "/" + squad.consensus + "?";
+                            membersOfSafe.forEach(m => {
+                                link += "signers=" + m.wallet + "&";
+                            });
+                            exampleEmbed.addField("Link", "You can start the safe creation [here](" + link + ")");
                             msg.channel.send(exampleEmbed);
                         }
                     }
 
 
                 } catch (e) {
-                    msg.channel.send("Something went wrong. Please make sure you provided a valid wallet.");
+                    msg.channel.send("Something went wrong.");
+                    console.log(e);
                 }
             }
 
@@ -392,14 +394,13 @@ setInterval(function () {
                     checkReceipt(tx, function (receipt) {
                         var safe = "0x" + receipt.logs[0].data.substring(26);
                         squad.safe = safe;
-                        value.setTopic(JSON.stringify(squad));
-                        value.send("Your safe has now been initialized with the address:`" + safe + "`");
+                        value.setTopic(JSON.stringify(squad)).then(value.send("Your safe has now been initialized with the address:`" + safe + "`"));
                     })
 
                 }
             }
         }
     );
-}, 1000 * 60);
+}, 1000 * 30);
 
 client.login(process.env.BOT_TOKEN);

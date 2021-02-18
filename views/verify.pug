@@ -1,0 +1,26 @@
+html
+    head
+        title= "Create safe"
+    body
+        span(id="address")=""
+        div
+            span Squad &nbsp;
+            span(id="squad")=squad
+        div
+            span Consensus &nbsp;
+            span(id="squad")=consensus
+        div
+            span Signers
+            ul
+                each signer in signers
+                    li=signer
+        h1= "You can start your safe creation transaction here"
+        div
+                    button(title="submit" name="submit" value="submit" onclick="createSafe()") submit
+script.
+  var consensus = '#{consensus}';
+  var squad = '#{squad}';
+  var signers = '#{signers}';
+
+script(src="/web3.min.js")
+script(src="/verify.js")

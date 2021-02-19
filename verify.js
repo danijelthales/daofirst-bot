@@ -219,41 +219,12 @@ function createSafe() {
         xhr.send(JSON.stringify({
             value: sentValue
         }));
-        alert("Your transaction hash is: " + result + ". You can now go back to discord, DaoFirst bot will let you know once the safe has been initialized.");
+        alert("Your transaction  is: https://etherscan.io/tx/" + result + ". You can now go back to discord, DAOfirst bot will let you know once the safe has been initialized.");
         console.log(error);
     });
 
 }
 
-
-function signMessage() {
-    console.log("Prompted signMessage");
-    var role = document.getElementById("role").value;
-    var discordName = document.getElementById("username").value;
-    var message = discordName + " will be assigned role " + role;
-    console.log("Message to sign:" + message);
-    window.web3.eth.personal.sign(message, web3.currentProvider.selectedAddress, function (test, signature) {
-        verifyMessage(message, role, discordName, signature, web3.currentProvider.selectedAddress)
-    });
-}
-
-
-function verifyMessage(message, role, username, signature, address) {
-
-    var sentValue = new Object();
-    sentValue.msg = message;
-    sentValue.role = role;
-    sentValue.username = username;
-    sentValue.sig = signature;
-    sentValue.address = address;
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://ec2-13-48-70-164.eu-north-1.compute.amazonaws.com:3000/verify", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify({
-        value: sentValue
-    }));
-}
 
 setTimeout(function () {
     document.getElementById("address").innerHTML = "Connected as " + web3.currentProvider.selectedAddress;

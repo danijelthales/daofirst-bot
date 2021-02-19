@@ -1,0 +1,119 @@
+Request URL: https://gitcoin.co/actions/bounty/24741/interest/new/
+Request Method: POST
+Status Code: 200 
+Remote Address: 100.20.207.164:443
+Referrer Policy: strict-origin-when-cross-origin
+access-control-allow-origin: https://gitcoin.co
+content-language: en
+content-length: 465
+content-security-policy: frame-ancestors 'self'
+content-type: application/json
+date: Fri, 19 Feb 2021 01:10:42 GMT
+server: nginx
+strict-transport-security: max-age=3600; includeSubDomains; preload
+vary: Authorization, Accept-Language, Cookie, Origin
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 1; mode=block
+:authority: gitcoin.co
+:method: POST
+:path: /actions/bounty/24741/interest/new/
+:scheme: https
+accept: */*
+accept-encoding: gzip, deflate, br
+accept-language: en-GB,en-US;q=0.9,en;q=0.8,sr;q=0.7,hr;q=0.6
+content-length: 71
+content-type: application/x-www-form-urlencoded; charset=UTF-8
+cookie: _ga=GA1.2.1856956535.1613574018; _hjid=b94dd75b-ebc5-47ba-87e5-09348f293fd2; mtc_id=318239; mtc_sid=mqf1eq2vjh2bd3yyng24ho8; mautic_device_id=mqf1eq2vjh2bd3yyng24ho8; _gid=GA1.2.1524218757.1613689455; csrftoken=sdnAYIFWGsm0JwmsrtpswaXMYP3qBmgHCTpPuJU6IqxFsvMSEbXUrCCWWGfSwBeZ; sessionid=pdac511qys41w4hz5l2ffjhh84nhpr1u; tab="search-mark ward"; _hjMinimizedPolls=349738; cookielaw_accepted=1; _hjIncludedInPageviewSample=1; _hjAbsoluteSessionInProgress=0
+origin: https://gitcoin.co
+referer: https://gitcoin.co/issue/BarnBridge/Meme-Competitions/14/100024741
+sec-fetch-dest: empty
+sec-fetch-mode: cors
+sec-fetch-site: same-origin
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36
+x-requested-with: XMLHttpRequest
+issue_message: testing once again lets see whats the payload to use here
+
+
+
+----------------------------------------------------------------------------------
+
+Request URL: https://gitcoin.co/actions/bounty/24748/interest/new/
+Request Method: POST
+Status Code: 200 
+Remote Address: 100.20.207.164:443
+Referrer Policy: strict-origin-when-cross-origin
+access-control-allow-origin: https://gitcoin.co
+content-language: en
+content-length: 411
+content-security-policy: frame-ancestors 'self'
+content-type: application/json
+date: Fri, 19 Feb 2021 11:29:22 GMT
+server: nginx
+strict-transport-security: max-age=3600; includeSubDomains; preload
+vary: Authorization, Accept-Language, Cookie, Origin
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 1; mode=block
+:authority: gitcoin.co
+:method: POST
+:path: /actions/bounty/24748/interest/new/
+:scheme: https
+accept: */*
+accept-encoding: gzip, deflate, br
+accept-language: en-GB,en-US;q=0.9,en;q=0.8,sr;q=0.7,hr;q=0.6
+content-length: 68
+content-type: application/x-www-form-urlencoded; charset=UTF-8
+cookie: _ga=GA1.2.1856956535.1613574018; _hjid=b94dd75b-ebc5-47ba-87e5-09348f293fd2; _gid=GA1.2.1524218757.1613689455; csrftoken=sdnAYIFWGsm0JwmsrtpswaXMYP3qBmgHCTpPuJU6IqxFsvMSEbXUrCCWWGfSwBeZ; sessionid=pdac511qys41w4hz5l2ffjhh84nhpr1u; _hjMinimizedPolls=349738; cookielaw_accepted=1; _hjIncludedInPageviewSample=1; _hjAbsoluteSessionInProgress=0; mtc_id=318239; mtc_sid=mqf1eq2vjh2bd3yyng24ho8; mautic_device_id=mqf1eq2vjh2bd3yyng24ho8
+origin: https://gitcoin.co
+referer: https://gitcoin.co/issue/celo-org/gitcoin/6/100024748
+sec-fetch-dest: empty
+sec-fetch-mode: cors
+sec-fetch-site: same-origin
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36
+x-requested-with: XMLHttpRequest
+issue_message: testing gitcoing API, please ignore this application
+
+-------------------------------------------------------------------
+Request URL: https://gitcoin.co/api/v1/bounty/fulfill
+Request Method: POST
+Status Code: 200 
+Remote Address: 44.240.207.171:443
+Referrer Policy: strict-origin-when-cross-origin
+access-control-allow-origin: https://gitcoin.co
+content-language: en
+content-length: 133
+content-security-policy: frame-ancestors 'self'
+content-type: application/json
+date: Fri, 19 Feb 2021 11:51:56 GMT
+server: nginx
+strict-transport-security: max-age=3600; includeSubDomains; preload
+vary: Authorization, Accept-Language, Cookie, Origin
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 1; mode=block
+:authority: gitcoin.co
+:method: POST
+:path: /api/v1/bounty/fulfill
+:scheme: https
+accept: */*
+accept-encoding: gzip, deflate, br
+accept-language: en-GB,en-US;q=0.9,en;q=0.8,sr;q=0.7,hr;q=0.6
+content-length: 645
+content-type: application/x-www-form-urlencoded; charset=UTF-8
+cookie: _ga=GA1.2.1856956535.1613574018; _hjid=b94dd75b-ebc5-47ba-87e5-09348f293fd2; _gid=GA1.2.1524218757.1613689455; csrftoken=sdnAYIFWGsm0JwmsrtpswaXMYP3qBmgHCTpPuJU6IqxFsvMSEbXUrCCWWGfSwBeZ; sessionid=pdac511qys41w4hz5l2ffjhh84nhpr1u; _hjMinimizedPolls=349738; cookielaw_accepted=1; _hjIncludedInPageviewSample=1; _hjAbsoluteSessionInProgress=0; mtc_id=318239; mtc_sid=mqf1eq2vjh2bd3yyng24ho8; mautic_device_id=mqf1eq2vjh2bd3yyng24ho8; _gat_UA-102304388-1=1
+origin: https://gitcoin.co
+referer: https://gitcoin.co/issue/fulfill?pk=24597&network=mainnet
+sec-fetch-dest: empty
+sec-fetch-mode: cors
+sec-fetch-site: same-origin
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36
+x-requested-with: XMLHttpRequest
+form data
+issueURL: https://github.com/raid-guild/indexed/issues/30
+githubPRLink: https://github.com/dgornjakovic/barnbridge-faq/
+hoursWorked: 1
+metadata: {"data":{"payload":{"fulfiller":{"address":"0x461783A831E6dB52D68Ba2f3194F6fd1E0087E04","hoursWorked":"1","githubPRLink":"https://github.com/dgornjakovic/barnbridge-faq/"}}},"accepted":false,"fulfiller":"0x461783A831E6dB52D68Ba2f3194F6fd1E0087E04","bountyPk":"24597"}
+fulfiller_address: 0x461783A831E6dB52D68Ba2f3194F6fd1E0087E04
+payout_type: web3_modal
+bountyPk: 24597

@@ -607,24 +607,28 @@ setInterval(function () {
     guild.channels.cache.forEach(function (value, key) {
             if (value.parent && value.parent.name == "squads") {
                 let squad = squadNameToSquadsMap.get(value.name);
-                if (squad.safe == null && squad.tx) {
-                    var tx = squad.tx;
-                    checkReceipt(tx, function (receipt) {
-                        var safe = "0x" + receipt.logs[0].data.substring(26);
-                        squad.safe = safe;
-                        value.setTopic("Safe: " + safe);
-                        if (process.env.REDIS_URL) {
-                            redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
-                            });
-                        }
-                        const exampleEmbed = new Discord.MessageEmbed()
-                            .setColor('#0099ff')
-                            .setTitle('Safe').setDescription("Your safe has been initialized.");
-                        exampleEmbed.addField("Address", safe);
-                        exampleEmbed.addField("App", "[gnosis](" + process.env.APP_LINK + ")");
-                        value.send(exampleEmbed);
-                    })
+                try {
+                    if (squad.safe == null && squad.tx) {
+                        var tx = squad.tx;
+                        checkReceipt(tx, function (receipt) {
+                            var safe = "0x" + receipt.logs[0].data.substring(26);
+                            squad.safe = safe;
+                            value.setTopic("Safe: " + safe);
+                            if (process.env.REDIS_URL) {
+                                redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                });
+                            }
+                            const exampleEmbed = new Discord.MessageEmbed()
+                                .setColor('#0099ff')
+                                .setTitle('Safe').setDescription("Your safe has been initialized.");
+                            exampleEmbed.addField("Address", safe);
+                            exampleEmbed.addField("App", "[gnosis](" + process.env.APP_LINK + ")");
+                            value.send(exampleEmbed);
+                        })
 
+                    }
+                } catch (e) {
+                    console.error(e);
                 }
             }
         }

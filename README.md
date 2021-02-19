@@ -2,7 +2,8 @@
 Invite [link](https://discord.com/oauth2/authorize?client_id=811246429636788246&scope=bot&permissions=8)
 
 # Commands 
-
+- *!help*
+    - shows all available commands
 - *!createSquad squadName*  
     - Creates a new squad, assigns it a channel and discord role. Adds the creators as the squad member.  
 - *!addMember taggedUser*  

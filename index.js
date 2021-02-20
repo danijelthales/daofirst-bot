@@ -11,7 +11,7 @@ app.set("views", path.join(__dirname, "views"));
 
 router.get("/createsafe/:squad/:consensus", (req, res) => {
     let signers = req.query.signers;
-    res.render("verify", {squad: req.params.squad, consensus: req.params.consensus, signers: signers});
+    res.render("createsafe", {squad: req.params.squad, consensus: req.params.consensus, signers: signers});
 });
 
 router.get('/createsafe.js', function (req, res) {

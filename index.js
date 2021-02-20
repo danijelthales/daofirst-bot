@@ -133,9 +133,7 @@ client.on("ready", () => {
 
     // checkMessages();
     client.guilds.cache.forEach(function (value, key) {
-        if (value.name.toLowerCase().includes('barnbridge') || value.name.toLowerCase().includes('playground')) {
-            guilds.push(value);
-        }
+        guilds.push(value);
     });
 })
 

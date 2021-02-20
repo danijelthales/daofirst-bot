@@ -126,13 +126,15 @@ if (process.env.REDIS_URL) {
 
 }
 
+let guilds = [];
+
 client.on("ready", () => {
     console.log(`Logged in as ${client.user.tag}!`);
 
     // checkMessages();
     client.guilds.cache.forEach(function (value, key) {
         if (value.name.toLowerCase().includes('barnbridge') || value.name.toLowerCase().includes('playground')) {
-            guild = value;
+            guilds.push(value);
         }
     });
 })
@@ -146,7 +148,7 @@ client.on("message", msg => {
                 const squadName = args.shift().trim();
 
                 var exists = false;
-                guild.roles.cache.forEach(function (value, key) {
+                msg.channel.guild.roles.cache.forEach(function (value, key) {
                         if (value.name == squadName) {
                             exists = true;
                         }
@@ -171,7 +173,7 @@ client.on("message", msg => {
 
                 var found = false;
                 var parentChannel = null;
-                guild.channels.cache.forEach(function (value, key) {
+                msg.channel.guild.channels.cache.forEach(function (value, key) {
                         if (value.name == "squads") {
                             parentChannel = value;
                             found = true;
@@ -179,23 +181,23 @@ client.on("message", msg => {
                     }
                 );
                 if (!found) {
-                    guild.channels.create("squads", {
+                    msg.channel.guild.channels.create("squads", {
                         type: 'category'
                     }).then(function (c) {
-                        guild.channels.create(squadName, {
+                        msg.channel.guild.channels.create(squadName, {
                             reason: "create a new squad",
                             parent: c
                         })
                             .then(function (cnew) {
                                 cnew.send("Welcome to your squad channel. You can add members to your squad with *!addMember @username*.")
                                 msg.channel.send("Your new squad channel has been initialized. Here is a link to it <#" + cnew.id + ">");
-                                guild.roles.create({
+                                msg.channel.guild.roles.create({
                                     data: {
                                         name: squadName,
                                         color: 'BLUE',
                                     }, reason: "New Squad Role"
                                 }).then(function (role) {
-                                    guild.members.fetch(msg.author.id).then(function (m) {
+                                    msg.channel.guild.members.fetch(msg.author.id).then(function (m) {
                                         m.roles.add(role);
                                     })
                                 }).catch(console.error);
@@ -203,20 +205,20 @@ client.on("message", msg => {
                             .catch(console.error);
                     }).catch(console.error);
                 } else {
-                    guild.channels.create(squadName, {
+                    msg.channel.guild.channels.create(squadName, {
                         reason: "create a new squad",
                         parent: parentChannel
                     })
                         .then(function (cnew) {
                             cnew.send("Welcome to your squad channel. You can add members to your squad with *!addMember @username*.")
                             msg.channel.send("Your new squad channel has been initialized. Here is a link to it <#" + cnew.id + ">.");
-                            guild.roles.create({
+                            msg.channel.guild.roles.create({
                                 data: {
                                     name: squadName,
                                     color: 'BLUE',
                                 }, reason: "New Squad Role"
                             }).then(function (role) {
-                                guild.members.fetch(msg.author.id).then(function (m) {
+                                msg.channel.guild.members.fetch(msg.author.id).then(function (m) {
                                     m.roles.add(role);
                                 })
                             }).catch(console.error);
@@ -230,7 +232,7 @@ client.on("message", msg => {
                 try {
 
                     var squadrole = null;
-                    guild.roles.cache.forEach(function (value, key) {
+                    msg.channel.guild.roles.cache.forEach(function (value, key) {
                             if (value.name == msg.channel.name) {
                                 squadrole = value;
                             }
@@ -253,7 +255,7 @@ client.on("message", msg => {
                     const member = args.shift().trim();
                     var memberid = member.substring(3, 21);
                     if (squadrole) {
-                        guild.members.fetch(memberid).then(function (m) {
+                        msg.channel.guild.members.fetch(memberid).then(function (m) {
                             m.roles.add(squadrole);
                             let squad = squadNameToSquadsMap.get(msg.channel.name);
                             squad.members.push(memberid);
@@ -276,7 +278,7 @@ client.on("message", msg => {
                 try {
 
                     var squadrole = null;
-                    guild.roles.cache.forEach(function (value, key) {
+                    msg.channel.guild.roles.cache.forEach(function (value, key) {
                             if (value.name == msg.channel.name) {
                                 squadrole = value;
                             }
@@ -299,7 +301,7 @@ client.on("message", msg => {
                     const member = args.shift().trim();
                     var memberid = member.substring(3, 21);
                     if (squadrole) {
-                        guild.members.fetch(memberid).then(function (m) {
+                        msg.channel.guild.members.fetch(memberid).then(function (m) {
                             var memberInSquad = m.roles.cache.find(r => r.name === squadrole.name) != null;
                             if (!memberInSquad) {
                                 msg.channel.send("User is not part of the squad!");
@@ -352,7 +354,7 @@ client.on("message", msg => {
                 try {
 
                     var squadrole = null;
-                    guild.roles.cache.forEach(function (value, key) {
+                    msg.channel.guild.roles.cache.forEach(function (value, key) {
                             if (value.name == msg.channel.name) {
                                 squadrole = value;
                             }
@@ -400,7 +402,7 @@ client.on("message", msg => {
             if (msg.content.toLowerCase().trim().startsWith("!initsafe")) {
                 try {
                     var squadrole = null;
-                    guild.roles.cache.forEach(function (value, key) {
+                    msg.channel.guild.roles.cache.forEach(function (value, key) {
                             if (value.name == msg.channel.name) {
                                 squadrole = value;
                             }
@@ -430,7 +432,7 @@ client.on("message", msg => {
                         let messageOfMembersOfSafe = "";
                         squad.members.forEach(m => {
                             let memberOfSafe = new Object();
-                            memberOfSafe.name = guild.members.cache.get(m).user.username;
+                            memberOfSafe.name = msg.channel.guild.members.cache.get(m).user.username;
                             if (!usersToWalletsMap.has(m)) {
                                 msg.channel.send("***" +
                                     memberOfSafe.name + "*** does not have an assigned wallet. All squad members must have wallets assigned for a safe to be created. Use *!setWallet* from the corresponding discord account to assign wallet."
@@ -468,7 +470,7 @@ client.on("message", msg => {
             if (msg.content.toLowerCase().trim().startsWith("!squad")) {
                 try {
                     var squadrole = null;
-                    guild.roles.cache.forEach(function (value, key) {
+                    msg.channel.guild.roles.cache.forEach(function (value, key) {
                             if (value.name == msg.channel.name) {
                                 squadrole = value;
                             }
@@ -487,7 +489,7 @@ client.on("message", msg => {
                     let messageOfMembersOfSafe = "";
                     squad.members.forEach(m => {
                         let memberOfSafe = new Object();
-                        memberOfSafe.name = guild.members.cache.get(m).user.username;
+                        memberOfSafe.name = msg.channel.guild.members.cache.get(m).user.username;
                         let userwallet = usersToWalletsMap.get(m);
                         memberOfSafe.wallet = userwallet != null ? userwallet : "";
                         membersOfSafe.push(memberOfSafe);
@@ -510,7 +512,7 @@ client.on("message", msg => {
                 try {
 
                     var squadrole = null;
-                    guild.roles.cache.forEach(function (value, key) {
+                    msg.channel.guild.roles.cache.forEach(function (value, key) {
                             if (value.name == msg.channel.name) {
                                 squadrole = value;
                             }
@@ -596,37 +598,39 @@ function checkReceipt(hash, cb) {
 }
 
 setInterval(function () {
-    guild.channels.cache.forEach(function (value, key) {
-            if (value.parent && value.parent.name == "squads") {
-                let squad = squadNameToSquadsMap.get(value.name);
-                try {
-                    if (squad) {
-                        if (squad.safe == null && squad.tx) {
-                            var tx = squad.tx;
-                            checkReceipt(tx, function (receipt) {
-                                var safe = "0x" + receipt.logs[0].data.substring(26);
-                                squad.safe = safe;
-                                value.setTopic("Safe: " + safe);
-                                if (process.env.REDIS_URL) {
-                                    redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
-                                    });
-                                }
-                                const exampleEmbed = new Discord.MessageEmbed()
-                                    .setColor('#0099ff')
-                                    .setTitle('Safe').setDescription("Your safe has been initialized.");
-                                exampleEmbed.addField("Address", safe);
-                                exampleEmbed.addField("App", "[gnosis](" + process.env.APP_LINK + ")");
-                                value.send(exampleEmbed);
-                            })
+    guilds.forEach(curGuild => {
+        curGuild.channels.cache.forEach(function (value, key) {
+                if (value.parent && value.parent.name == "squads") {
+                    let squad = squadNameToSquadsMap.get(value.name);
+                    try {
+                        if (squad) {
+                            if (squad.safe == null && squad.tx) {
+                                var tx = squad.tx;
+                                checkReceipt(tx, function (receipt) {
+                                    var safe = "0x" + receipt.logs[0].data.substring(26);
+                                    squad.safe = safe;
+                                    value.setTopic("Safe: " + safe);
+                                    if (process.env.REDIS_URL) {
+                                        redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                        });
+                                    }
+                                    const exampleEmbed = new Discord.MessageEmbed()
+                                        .setColor('#0099ff')
+                                        .setTitle('Safe').setDescription("Your safe has been initialized.");
+                                    exampleEmbed.addField("Address", safe);
+                                    exampleEmbed.addField("App", "[gnosis](" + process.env.APP_LINK + ")");
+                                    value.send(exampleEmbed);
+                                })
 
+                            }
                         }
+                    } catch (e) {
+                        console.error(e);
                     }
-                } catch (e) {
-                    console.error(e);
                 }
             }
-        }
-    );
+        );
+    })
 }, 1000 * 30);
 
 client.login(process.env.BOT_TOKEN);

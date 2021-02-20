@@ -1,58 +1,28 @@
-.risky {
+img.safe-image {
+    height: 300px;
+}
+
+.header {
+    display: grid;
+}
+
+span.address {
     color: red;
+    margin-bottom: 15px;
+    padding-top: 5px;
+    font-size: larger;
 }
 
-.frozen {
-    background-color: gray;
-    text-decoration: line-through;
+.parameter {
+    color: blue;
+    font-size: larger;
 }
 
-ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background-color: #333;
+.creation-box {
+    display: grid;
 }
 
-li {
-    float: left;
+button {
+    max-width: fit-content;
 }
 
-li a {
-    display: block;
-    color: white;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-}
-
-li a:hover {
-    background-color: #111;
-}
-
-ul.pagination{
-    background-color: transparent;
-}
-
-
-button:hover{
-    cursor: pointer;
-}
-
-#Address{
-    width: 25rem;
-    padding: 2px;
-    margin-right: 5px;
-    margin-left: 5px;
-}
-
-.address{
-    padding-left: 4px;
-}
-
-td.synth-key {
-    font-size: 0.8em;
-    max-width: 15em !important;
-    overflow-x: auto;
-}

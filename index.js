@@ -14,16 +14,8 @@ router.get("/createsafe/:squad/:consensus", (req, res) => {
     res.render("verify", {squad: req.params.squad, consensus: req.params.consensus, signers: signers});
 });
 
-router.get('/table-sort.js', function (req, res) {
-    res.sendFile(path.join(__dirname + '/table-sort.js'));
-});
-
-router.get('/finish.js', function (req, res) {
-    res.sendFile(path.join(__dirname + '/finish.js'));
-});
-
-router.get('/verify.js', function (req, res) {
-    res.sendFile(path.join(__dirname + '/verify.js'));
+router.get('/createsafe.js', function (req, res) {
+    res.sendFile(path.join(__dirname + '/createsafe.js'));
 });
 
 router.get('/web3.min.js', function (req, res) {

@@ -251,17 +251,23 @@ client.on("message", msg => {
                     const args = msg.content.toLowerCase().trim().replace(/ +(?= )/g, '').slice("!addmember".length).split(' ');
                     args.shift();
                     const member = args.shift().trim();
-                    var memberid = member.substring(3, 21);
+                    member.replace("<", "").replace(">", "").replace("!", "")
+                    var memberid = member.replace("<", "").replace(">", "").replace("!", "").replace("@", "");
+
                     if (squadrole) {
                         msg.channel.guild.members.fetch(memberid).then(function (m) {
-                            m.roles.add(squadrole);
-                            let squad = squadNameToSquadsMap.get(msg.channel.name);
-                            squad.members.push(memberid);
-                            if (process.env.REDIS_URL) {
-                                redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
-                                });
+                            try {
+                                m.roles.add(squadrole);
+                                let squad = squadNameToSquadsMap.get(msg.channel.name);
+                                squad.members.push(memberid);
+                                if (process.env.REDIS_URL) {
+                                    redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                    });
+                                }
+                                msg.channel.send(member + " added to the squad.");
+                            } catch (e) {
+                                msg.channel.send("Something went wrong. Make sure you have tagged the user properly.");
                             }
-                            msg.channel.send(member + " added to the squad.");
                         }).catch(console.error)
                     } else {
                         msg.channel.send("This is not a squad channel.");

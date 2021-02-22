@@ -29,18 +29,20 @@ router.post("/safetx", async (req, res) => {
         try {
             let tx = req.body.value.tx;
             let squadname = req.body.value.squad;
-            guild.channels.cache.forEach(function (value, key) {
-                    if (value.name == squadname) {
-                        let squad = squadNameToSquadsMap.get(value.name);
-                        squad.tx = tx;
-                        if (process.env.REDIS_URL) {
-                            redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
-                            });
+            guilds.forEach(curGuild => {
+                curGuild.channels.cache.forEach(function (value, key) {
+                        if (value.name == squadname) {
+                            let squad = squadNameToSquadsMap.get(value.name);
+                            squad.tx = tx;
+                            if (process.env.REDIS_URL) {
+                                redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                });
+                            }
+                            value.send("Listening to safe creation tx with hash: `" + tx + "`");
                         }
-                        value.send("Listening to safe creation tx with hash: `" + tx + "`");
                     }
-                }
-            );
+                );
+            })
         } catch (e) {
             console.log(e);
         }

@@ -194,7 +194,7 @@ client.on("message", msg => {
                                 msg.channel.guild.roles.create({
                                     data: {
                                         name: squadName,
-                                        color: 'BLUE',
+                                        color: 'RANDOM',
                                     }, reason: "New Squad Role"
                                 }).then(function (role) {
                                     msg.channel.guild.members.fetch(msg.author.id).then(function (m) {
@@ -259,6 +259,11 @@ client.on("message", msg => {
                     if (squadrole) {
                         msg.channel.guild.members.fetch(memberid).then(function (m) {
                             try {
+                                var memberIsInSquad = m.roles.cache.find(r => r.name === squadrole.name) != null;
+                                if (memberIsInSquad) {
+                                    msg.channel.send("User is already a squad member!");
+                                    return;
+                                }
                                 m.roles.add(squadrole);
                                 let squad = squadNameToSquadsMap.get(msg.channel.name);
                                 squad.members.push(memberid);
@@ -381,7 +386,7 @@ client.on("message", msg => {
                     const args = msg.content.toLowerCase().trim().replace(/ +(?= )/g, '').slice("!setconsensus".length).split(' ');
                     args.shift();
                     const consensus = args.shift().trim();
-                    if (isNaN(consensus)) {
+                    if (isNaN(consensus) || (consensus % 1 != 0)) {
                         msg.channel.send("That is not a proper consensus number.");
                         return;
                     }

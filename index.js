@@ -215,7 +215,7 @@ client.on("message", msg => {
                             msg.channel.guild.roles.create({
                                 data: {
                                     name: squadName,
-                                    color: 'BLUE',
+                                    color: 'RANDOM',
                                 }, reason: "New Squad Role"
                             }).then(function (role) {
                                 msg.channel.guild.members.fetch(msg.author.id).then(function (m) {

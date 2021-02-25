@@ -1663,64 +1663,66 @@ function checkSafe(address, squad) {
                         }
                     ], address);
                     safecontract.methods.getOwners().call((error, result) => {
-                        console.log(result);
-                        let membersOfSquadWallets = [];
-                        squad.members.forEach(m => {
-                            let memberOfSafe = new Object();
-                            memberOfSafe.name = curGuild.members.cache.get(m).user.username;
-                            memberOfSafe.id = curGuild.members.cache.get(m).id;
-                            let userwallet = usersToWalletsMap.get(m);
-                            memberOfSafe.wallet = userwallet != null ? userwallet : "";
-                            if (memberOfSafe.wallet) {
-                                membersOfSquadWallets.push(memberOfSafe);
-                                let safeHasWallet = false;
-                                result.forEach(r => {
-                                    if (r.toLowerCase() == memberOfSafe.wallet.toLowerCase()) {
-                                        safeHasWallet = true;
+                        if (result) {
+                            console.log(result);
+                            let membersOfSquadWallets = [];
+                            squad.members.forEach(m => {
+                                let memberOfSafe = new Object();
+                                memberOfSafe.name = curGuild.members.cache.get(m).user.username;
+                                memberOfSafe.id = curGuild.members.cache.get(m).id;
+                                let userwallet = usersToWalletsMap.get(m);
+                                memberOfSafe.wallet = userwallet != null ? userwallet : "";
+                                if (memberOfSafe.wallet) {
+                                    membersOfSquadWallets.push(memberOfSafe);
+                                    let safeHasWallet = false;
+                                    result.forEach(r => {
+                                        if (r.toLowerCase() == memberOfSafe.wallet.toLowerCase()) {
+                                            safeHasWallet = true;
+                                            return;
+                                        }
+                                    })
+                                    if (!safeHasWallet) {
+                                        curGuild.members.fetch(memberOfSafe.id).then(function (m) {
+                                            var memberInSquad = m.roles.cache.find(r => r.name === squadrole.name) != null;
+                                            m.roles.remove(squadrole);
+                                            const index = squad.members.indexOf(m.id);
+                                            if (index > -1) {
+                                                squad.members.splice(index, 1);
+                                            }
+                                            squadNameToSquadsMap.set(squad.name, squad);
+                                            if (process.env.REDIS_URL) {
+                                                redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                                });
+                                            }
+                                            value.send("User " + memberOfSafe.name + " is not part of the gnosis safe signers. Removing him from the squad. Please first add his address to the safe in the gnosis app if you want to add him to the squad.");
+                                        }).catch(console.error)
+                                    }
+                                }
+
+                            });
+
+                            result.forEach(r => {
+                                let squadHasWallet = false;
+                                membersOfSquadWallets.forEach(m => {
+                                    if (r.toLowerCase() == m.wallet.toLowerCase()) {
+                                        squadHasWallet = true;
                                         return;
                                     }
                                 })
-                                if (!safeHasWallet) {
-                                    curGuild.members.fetch(memberOfSafe.id).then(function (m) {
-                                        var memberInSquad = m.roles.cache.find(r => r.name === squadrole.name) != null;
-                                        m.roles.remove(squadrole);
-                                        const index = squad.members.indexOf(m.id);
-                                        if (index > -1) {
-                                            squad.members.splice(index, 1);
-                                        }
-                                        squadNameToSquadsMap.set(squad.name, squad);
+                                if (!squadHasWallet) {
+                                    let message = "Gnosis safe has a signer: " + r + " who is not part of the squad here. Please add that squad member.";
+                                    if (!sentWarningMessagesMap.has(message)) {
+                                        value.send(message);
+                                        sentWarningMessagesMap.set(message, true)
                                         if (process.env.REDIS_URL) {
-                                            redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                            redisClient.set("sentWarningMessagesMap", JSON.stringify([...sentWarningMessagesMap]), function () {
                                             });
                                         }
-                                        value.send("User " + memberOfSafe.name + " is not part of the gnosis safe signers. Removing him from the squad. Please first add his address to the safe in the gnosis app if you want to add him to the squad.");
-                                    }).catch(console.error)
-                                }
-                            }
-
-                        });
-
-                        result.forEach(r => {
-                            let squadHasWallet = false;
-                            membersOfSquadWallets.forEach(m => {
-                                if (r.toLowerCase() == m.wallet.toLowerCase()) {
-                                    squadHasWallet = true;
-                                    return;
-                                }
-                            })
-                            if (!squadHasWallet) {
-                                let message = "Gnosis safe has a signer: " + r + " who is not part of the squad here. Please add that squad member.";
-                                if (!sentWarningMessagesMap.has(message)) {
-                                    value.send(message);
-                                    sentWarningMessagesMap.set(message, true)
-                                    if (process.env.REDIS_URL) {
-                                        redisClient.set("sentWarningMessagesMap", JSON.stringify([...sentWarningMessagesMap]), function () {
-                                        });
                                     }
                                 }
-                            }
 
-                        })
+                            })
+                        }
                     });
                     safecontract.methods.getThreshold().call((error, result) => {
                         console.log(result);

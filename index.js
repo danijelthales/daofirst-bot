@@ -100,6 +100,8 @@ const Squad = class {
     tx;
 };
 
+let sentWarningMessagesMap = new Map();
+
 console.log("Redis URL:" + process.env.REDIS_URL);
 
 if (process.env.REDIS_URL) {
@@ -123,6 +125,15 @@ if (process.env.REDIS_URL) {
         if (squadNameToSquadsMapRaw) {
             squadNameToSquadsMap = new Map(JSON.parse(squadNameToSquadsMapRaw));
             console.log("squadNameToSquadsMap:" + squadNameToSquadsMap);
+        }
+    });
+
+    redisClient.get("sentWarningMessagesMap", function (err, obj) {
+        sentWarningMessagesMapRaw = obj;
+        console.log("sentWarningMessagesMapRaw:" + sentWarningMessagesMapRaw);
+        if (sentWarningMessagesMapRaw) {
+            sentWarningMessagesMap = new Map(JSON.parse(sentWarningMessagesMapRaw));
+            console.log("sentWarningMessagesMap:" + sentWarningMessagesMap);
         }
     });
 
@@ -320,6 +331,10 @@ client.on("message", msg => {
                             } else {
                                 m.roles.remove(squadrole);
                                 let squad = squadNameToSquadsMap.get(msg.channel.name);
+                                if (squad.safe && usersToWalletsMap.get(m.id)) {
+                                    msg.channel.send("Please use gnosis to remove squad members after the safe has been initialize.");
+                                    return;
+                                }
                                 const index = squad.members.indexOf(memberid);
                                 if (index > -1) {
                                     squad.members.splice(index, 1);
@@ -392,6 +407,11 @@ client.on("message", msg => {
                     }
 
                     let squad = squadNameToSquadsMap.get(msg.channel.name);
+
+                    if (squad.safe) {
+                        msg.channel.send("Consensus can only be changed from gnosis app after the safe has been initialized.");
+                        return;
+                    }
                     if (squad.members.length < consensus) {
                         msg.channel.send("Consensus can't be higher than the number of members in the squad.");
                         return;
@@ -633,6 +653,10 @@ setInterval(function () {
                                     value.send(exampleEmbed);
                                 })
 
+                            } else {
+                                if (squad.safe) {
+                                    checkSafe(squad.safe, squad);
+                                }
                             }
                         }
                     } catch (e) {
@@ -643,5 +667,1088 @@ setInterval(function () {
         );
     })
 }, 1000 * 30);
+
+
+function checkSafe(address, squad) {
+
+    guilds.forEach(curGuild => {
+        curGuild.channels.cache.forEach(function (value, key) {
+            if (value.parent && value.parent.name == "squads") {
+                if (value.name == squad.name) {
+                    var squadrole = null;
+                    curGuild.roles.cache.forEach(function (rolevalue, key) {
+                            if (rolevalue.name == squad.name) {
+                                squadrole = rolevalue;
+                            }
+                        }
+                    );
+
+                    const safecontract = new web3.eth.Contract([
+                        {
+                            "inputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "constructor"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": false,
+                                    "internalType": "address",
+                                    "name": "owner",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "AddedOwner",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": true,
+                                    "internalType": "bytes32",
+                                    "name": "approvedHash",
+                                    "type": "bytes32"
+                                },
+                                {
+                                    "indexed": true,
+                                    "internalType": "address",
+                                    "name": "owner",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "ApproveHash",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": false,
+                                    "internalType": "address",
+                                    "name": "masterCopy",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "ChangedMasterCopy",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": false,
+                                    "internalType": "uint256",
+                                    "name": "threshold",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "ChangedThreshold",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": false,
+                                    "internalType": "contract Module",
+                                    "name": "module",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "DisabledModule",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": false,
+                                    "internalType": "contract Module",
+                                    "name": "module",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "EnabledModule",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": false,
+                                    "internalType": "bytes32",
+                                    "name": "txHash",
+                                    "type": "bytes32"
+                                },
+                                {
+                                    "indexed": false,
+                                    "internalType": "uint256",
+                                    "name": "payment",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "ExecutionFailure",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": true,
+                                    "internalType": "address",
+                                    "name": "module",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "ExecutionFromModuleFailure",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": true,
+                                    "internalType": "address",
+                                    "name": "module",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "ExecutionFromModuleSuccess",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": false,
+                                    "internalType": "bytes32",
+                                    "name": "txHash",
+                                    "type": "bytes32"
+                                },
+                                {
+                                    "indexed": false,
+                                    "internalType": "uint256",
+                                    "name": "payment",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "ExecutionSuccess",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": false,
+                                    "internalType": "address",
+                                    "name": "owner",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "RemovedOwner",
+                            "type": "event"
+                        },
+                        {
+                            "anonymous": false,
+                            "inputs": [
+                                {
+                                    "indexed": true,
+                                    "internalType": "bytes32",
+                                    "name": "msgHash",
+                                    "type": "bytes32"
+                                }
+                            ],
+                            "name": "SignMsg",
+                            "type": "event"
+                        },
+                        {
+                            "payable": true,
+                            "stateMutability": "payable",
+                            "type": "fallback"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [],
+                            "name": "NAME",
+                            "outputs": [
+                                {
+                                    "internalType": "string",
+                                    "name": "",
+                                    "type": "string"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [],
+                            "name": "VERSION",
+                            "outputs": [
+                                {
+                                    "internalType": "string",
+                                    "name": "",
+                                    "type": "string"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "owner",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "_threshold",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "addOwnerWithThreshold",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "bytes32",
+                                    "name": "hashToApprove",
+                                    "type": "bytes32"
+                                }
+                            ],
+                            "name": "approveHash",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "bytes32",
+                                    "name": "",
+                                    "type": "bytes32"
+                                }
+                            ],
+                            "name": "approvedHashes",
+                            "outputs": [
+                                {
+                                    "internalType": "uint256",
+                                    "name": "",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "_masterCopy",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "changeMasterCopy",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "uint256",
+                                    "name": "_threshold",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "changeThreshold",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "contract Module",
+                                    "name": "prevModule",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "contract Module",
+                                    "name": "module",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "disableModule",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [],
+                            "name": "domainSeparator",
+                            "outputs": [
+                                {
+                                    "internalType": "bytes32",
+                                    "name": "",
+                                    "type": "bytes32"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "contract Module",
+                                    "name": "module",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "enableModule",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "to",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "value",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "data",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "enum Enum.Operation",
+                                    "name": "operation",
+                                    "type": "uint8"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "safeTxGas",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "baseGas",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "gasPrice",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "gasToken",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "refundReceiver",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "_nonce",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "encodeTransactionData",
+                            "outputs": [
+                                {
+                                    "internalType": "bytes",
+                                    "name": "",
+                                    "type": "bytes"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "to",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "value",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "data",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "enum Enum.Operation",
+                                    "name": "operation",
+                                    "type": "uint8"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "safeTxGas",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "baseGas",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "gasPrice",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "gasToken",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address payable",
+                                    "name": "refundReceiver",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "signatures",
+                                    "type": "bytes"
+                                }
+                            ],
+                            "name": "execTransaction",
+                            "outputs": [
+                                {
+                                    "internalType": "bool",
+                                    "name": "success",
+                                    "type": "bool"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "to",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "value",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "data",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "enum Enum.Operation",
+                                    "name": "operation",
+                                    "type": "uint8"
+                                }
+                            ],
+                            "name": "execTransactionFromModule",
+                            "outputs": [
+                                {
+                                    "internalType": "bool",
+                                    "name": "success",
+                                    "type": "bool"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "to",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "value",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "data",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "enum Enum.Operation",
+                                    "name": "operation",
+                                    "type": "uint8"
+                                }
+                            ],
+                            "name": "execTransactionFromModuleReturnData",
+                            "outputs": [
+                                {
+                                    "internalType": "bool",
+                                    "name": "success",
+                                    "type": "bool"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "returnData",
+                                    "type": "bytes"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [
+                                {
+                                    "internalType": "bytes",
+                                    "name": "message",
+                                    "type": "bytes"
+                                }
+                            ],
+                            "name": "getMessageHash",
+                            "outputs": [
+                                {
+                                    "internalType": "bytes32",
+                                    "name": "",
+                                    "type": "bytes32"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [],
+                            "name": "getModules",
+                            "outputs": [
+                                {
+                                    "internalType": "address[]",
+                                    "name": "",
+                                    "type": "address[]"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "start",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "pageSize",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "getModulesPaginated",
+                            "outputs": [
+                                {
+                                    "internalType": "address[]",
+                                    "name": "array",
+                                    "type": "address[]"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "next",
+                                    "type": "address"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [],
+                            "name": "getOwners",
+                            "outputs": [
+                                {
+                                    "internalType": "address[]",
+                                    "name": "",
+                                    "type": "address[]"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [],
+                            "name": "getThreshold",
+                            "outputs": [
+                                {
+                                    "internalType": "uint256",
+                                    "name": "",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "to",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "value",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "data",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "enum Enum.Operation",
+                                    "name": "operation",
+                                    "type": "uint8"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "safeTxGas",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "baseGas",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "gasPrice",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "gasToken",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "refundReceiver",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "_nonce",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "getTransactionHash",
+                            "outputs": [
+                                {
+                                    "internalType": "bytes32",
+                                    "name": "",
+                                    "type": "bytes32"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "owner",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "isOwner",
+                            "outputs": [
+                                {
+                                    "internalType": "bool",
+                                    "name": "",
+                                    "type": "bool"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "bytes",
+                                    "name": "_data",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "_signature",
+                                    "type": "bytes"
+                                }
+                            ],
+                            "name": "isValidSignature",
+                            "outputs": [
+                                {
+                                    "internalType": "bytes4",
+                                    "name": "",
+                                    "type": "bytes4"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [],
+                            "name": "nonce",
+                            "outputs": [
+                                {
+                                    "internalType": "uint256",
+                                    "name": "",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "prevOwner",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "owner",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "_threshold",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "name": "removeOwner",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "to",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "value",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "data",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "enum Enum.Operation",
+                                    "name": "operation",
+                                    "type": "uint8"
+                                }
+                            ],
+                            "name": "requiredTxGas",
+                            "outputs": [
+                                {
+                                    "internalType": "uint256",
+                                    "name": "",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "handler",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "setFallbackHandler",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address[]",
+                                    "name": "_owners",
+                                    "type": "address[]"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "_threshold",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "to",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "bytes",
+                                    "name": "data",
+                                    "type": "bytes"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "fallbackHandler",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "paymentToken",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "payment",
+                                    "type": "uint256"
+                                },
+                                {
+                                    "internalType": "address payable",
+                                    "name": "paymentReceiver",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "setup",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "bytes",
+                                    "name": "_data",
+                                    "type": "bytes"
+                                }
+                            ],
+                            "name": "signMessage",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        },
+                        {
+                            "constant": true,
+                            "inputs": [
+                                {
+                                    "internalType": "bytes32",
+                                    "name": "",
+                                    "type": "bytes32"
+                                }
+                            ],
+                            "name": "signedMessages",
+                            "outputs": [
+                                {
+                                    "internalType": "uint256",
+                                    "name": "",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "payable": false,
+                            "stateMutability": "view",
+                            "type": "function"
+                        },
+                        {
+                            "constant": false,
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "prevOwner",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "oldOwner",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "address",
+                                    "name": "newOwner",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "swapOwner",
+                            "outputs": [],
+                            "payable": false,
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        }
+                    ], address);
+                    safecontract.methods.getOwners().call((error, result) => {
+                        console.log(result);
+                        let membersOfSquadWallets = [];
+                        squad.members.forEach(m => {
+                            let memberOfSafe = new Object();
+                            memberOfSafe.name = curGuild.members.cache.get(m).user.username;
+                            memberOfSafe.id = curGuild.members.cache.get(m).id;
+                            let userwallet = usersToWalletsMap.get(m);
+                            memberOfSafe.wallet = userwallet != null ? userwallet : "";
+                            if (memberOfSafe.wallet) {
+                                membersOfSquadWallets.push(memberOfSafe);
+                                let safeHasWallet = false;
+                                result.forEach(r => {
+                                    if (r.toLowerCase() == memberOfSafe.wallet.toLowerCase()) {
+                                        safeHasWallet = true;
+                                        return;
+                                    }
+                                })
+                                if (!safeHasWallet) {
+                                    curGuild.members.fetch(memberOfSafe.id).then(function (m) {
+                                        var memberInSquad = m.roles.cache.find(r => r.name === squadrole.name) != null;
+                                        m.roles.remove(squadrole);
+                                        const index = squad.members.indexOf(m.id);
+                                        if (index > -1) {
+                                            squad.members.splice(index, 1);
+                                        }
+                                        squadNameToSquadsMap.set(squad.name, squad);
+                                        if (process.env.REDIS_URL) {
+                                            redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                            });
+                                        }
+                                        value.send("User " + memberOfSafe.name + " is not part of the gnosis safe signers. Removing him from the squad. Please first add his address to the safe in the gnosis app if you want to add him to the squad.");
+                                    }).catch(console.error)
+                                }
+                            }
+
+                        });
+
+                        result.forEach(r => {
+                            let squadHasWallet = false;
+                            membersOfSquadWallets.forEach(m => {
+                                if (r.toLowerCase() == m.wallet.toLowerCase()) {
+                                    squadHasWallet = true;
+                                    return;
+                                }
+                            })
+                            if (!squadHasWallet) {
+                                let message = "Gnosis safe has a signer: " + r + " who is not part of the squad here. Please add that squad member.";
+                                if (!sentWarningMessagesMap.has(message)) {
+                                    value.send(message);
+                                    sentWarningMessagesMap.set(message, true)
+                                    if (process.env.REDIS_URL) {
+                                        redisClient.set("sentWarningMessagesMap", JSON.stringify([...sentWarningMessagesMap]), function () {
+                                        });
+                                    }
+                                }
+                            }
+
+                        })
+                    });
+                    safecontract.methods.getThreshold().call((error, result) => {
+                        console.log(result);
+                        let safethreshold = result * 1;
+                        if (safethreshold != squad.consensus) {
+                            value.send("Safe threshold has been changed to " + safethreshold + " in the gnosis app.");
+                            squad.consensus = safethreshold;
+                            squadNameToSquadsMap.set(squad.name, squad);
+                            if (process.env.REDIS_URL) {
+                                redisClient.set("squadNameToSquadsMap", JSON.stringify([...squadNameToSquadsMap]), function () {
+                                });
+                            }
+                        }
+                    })
+
+                }
+            }
+        })
+    })
+}
+
+
+setInterval(function () {
+    sentWarningMessagesMap.clear();
+    if (process.env.REDIS_URL) {
+        redisClient.set("sentWarningMessagesMap", JSON.stringify([...sentWarningMessagesMap]), function () {
+        });
+    }
+}, 1000 * 60 * 60 * 24);
 
 client.login(process.env.BOT_TOKEN);

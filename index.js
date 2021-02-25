@@ -155,7 +155,7 @@ setInterval(function () {
     client.guilds.cache.forEach(function (value, key) {
         tempGuilds.push(value);
     });
-    guild = tempGuilds;
+    guilds = tempGuilds;
 }, 1000 * 60 * 5);
 
 client.on("message", msg => {

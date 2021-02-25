@@ -150,6 +150,14 @@ client.on("ready", () => {
     });
 })
 
+setInterval(function () {
+    let tempGuilds = [];
+    client.guilds.cache.forEach(function (value, key) {
+        tempGuilds.push(value);
+    });
+    guild = tempGuilds;
+}, 1000 * 60 * 5);
+
 client.on("message", msg => {
         if (!(msg.channel.type == "dm")) {
             if (msg.content.toLowerCase().trim().startsWith("!createsquad")) {

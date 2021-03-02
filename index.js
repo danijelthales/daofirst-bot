@@ -595,7 +595,7 @@ client.on("message", msg => {
             if (msg.content.toLowerCase().trim().startsWith("!help")) {
                 const exampleEmbed = new Discord.MessageEmbed()
                     .setColor('#0099ff')
-                    .setTitle('DAOfirst bot');
+                    .setTitle('SquadDAO bot');
 
                 exampleEmbed.setDescription('List of commands:');
                 exampleEmbed.addField("!createSquad squadName", "Creates a new squad, assigns it a channel and discord role. Adds the creators as the squad member.");

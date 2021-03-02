@@ -219,7 +219,7 @@ function createSafe() {
         xhr.send(JSON.stringify({
             value: sentValue
         }));
-        alert("Your transaction  is: https://etherscan.io/tx/" + result + ". You can now go back to discord, DAOfirst bot will let you know once the safe has been initialized.");
+        alert("Your transaction  is: https://etherscan.io/tx/" + result + ". You can now go back to discord, SquadDAO bot will let you know once the safe has been initialized.");
         console.log(error);
     });
 

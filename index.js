@@ -22,6 +22,10 @@ router.get('/logo.svg', function (req, res) {
     res.sendFile(path.join(__dirname + '/logo.svg'));
 });
 
+router.get('/favicon.png', function (req, res) {
+    res.sendFile(path.join(__dirname + '/favicon.png'));
+});
+
 router.get('/web3.min.js', function (req, res) {
     res.sendFile(path.join(__dirname + '/web3.min.js'));
 });

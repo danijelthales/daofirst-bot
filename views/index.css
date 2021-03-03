@@ -1,28 +1,74 @@
-img.safe-image {
-    height: 300px;
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Manrope:wght@600;700&display=swap');
+html, body, * {
+    margin: 0;
+    padding: 0;
+    outline: none;
+    font-family: 'Manrope', sans-serif;
 }
-
-.header {
-    display: grid;
+img {
+    max-width: 100%;
 }
-
-span.address {
-    color: red;
+.safe-page {
+    background: #F5FAF9;
+    padding: 35px 15px 120px;
+    text-align: center;
+}
+.safe-page .logo {
+    display: block;
+    width: 132px;
+    height: auto;
+    margin: 0 auto 120px;
+}
+.safe-page .code {
+    font-family: 'IBM Plex Mono', monospace;
+}
+.safe-page .title {
+    font-size: 42px;
+    font-weight: 700;
     margin-bottom: 15px;
-    padding-top: 5px;
-    font-size: larger;
 }
-
-.parameter {
-    color: blue;
-    font-size: larger;
+.safe-page .description {
+    font-size: 20px;
+    margin-bottom: 40px;
+    color: #576C6A;
+    font-weight: 400px;
 }
-
-.creation-box {
-    display: grid;
+.safe-page .panel {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 60px #00000009;
+    padding: 30px 60px;
+    max-width: 770px;
+    margin: 0 auto 20px;
+    display: flex;
+    text-align: left;
 }
-
-button {
-    max-width: fit-content;
+.safe-page .name {
+    width: 25%;
+    font-weight: 700;
 }
-
+.safe-page .cta {
+    display: inline-block;
+    background: #000;
+    border-radius: 12px;
+    padding: 16px 80px;
+    color: #fff;
+    font-size: 18px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 37px;
+}
+.safe-page .cta:hover {
+    background: #333;
+}
+@media (max-width: 767px) {
+    .safe-page .panel {
+        display: block;
+    }
+    .safe-page .name {
+        width: auto;
+    }
+    .safe-page .cta {
+        padding: 16px 40px;
+    }
+}

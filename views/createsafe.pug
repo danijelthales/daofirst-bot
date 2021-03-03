@@ -3,24 +3,24 @@ html
         title= "Create safe"
         style
             include index.css
-    body
-        div(class="header")
-            span(id="address" class="address")=""
+    body(class="safe-page")
+        a(class="logo" href="#")
+            img(src="/logo.svg" alt="SquadDao")
+        h1(class="title") Connected as
         div(class="param-box")
-            div
-                span Squad &nbsp;
-                span(id="squad" class="parameter")=squad
-            div
-                span Consensus &nbsp;
-                span(id="consensus" class="parameter")=consensus
-            div
-                span Signers
-                ul
-                    each signer in signers
-                        li(class="parameter")=signer
-        div(class="creation-box")
-            button(title="submit" name="submit" value="submit" onclick="createSafe()") CREATE SAFE
-            img(src="https://pngimg.com/uploads/safe/safe_PNG33.png" class="safe-image")
+        div(class="description code" id="address")
+        div(class="panel")
+            div(class="name") Squad
+            div(class="code")=squad
+        div(class="panel")
+            div(class="name") Consensus
+            div(class="code")=consensus
+        div(class="panel")
+            div(class="name") Signers
+            div(class="code")
+                each signer in signers
+                    p signer
+        a(class="cta" href="#" onclick="createSafe()") CREATE SAFE
 script.
     var consensus = '#{consensus}';
     var squad = '#{squad}';

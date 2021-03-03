@@ -227,9 +227,9 @@ function createSafe() {
 
 
 setTimeout(function () {
-    document.getElementById("address").innerHTML = "Connected as " + web3.currentProvider.selectedAddress;
+    document.getElementById("address").innerHTML = web3.currentProvider.selectedAddress;
 }, 1000 * 1);
 
 setInterval(function () {
-    document.getElementById("address").innerHTML = "Connected as " + web3.currentProvider.selectedAddress;
+    document.getElementById("address").innerHTML = web3.currentProvider.selectedAddress;
 }, 1000 * 10);

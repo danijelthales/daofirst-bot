@@ -18,6 +18,10 @@ router.get('/createsafe.js', function (req, res) {
     res.sendFile(path.join(__dirname + '/createsafe.js'));
 });
 
+router.get('/logo.svg', function (req, res) {
+    res.sendFile(path.join(__dirname + '/logo.svg'));
+});
+
 router.get('/web3.min.js', function (req, res) {
     res.sendFile(path.join(__dirname + '/web3.min.js'));
 });
@@ -1735,7 +1739,7 @@ function checkSafe(address, squad) {
                     safecontract.methods.getThreshold().call((error, result) => {
                         console.log(result);
                         let safethreshold = result * 1;
-                        if (safethreshold != squad.consensus) {
+                        if ((!isNaN(safethreshold)) && safethreshold != squad.consensus) {
                             value.send("Safe threshold has been changed to " + safethreshold + " in the gnosis app.");
                             squad.consensus = safethreshold;
                             squadNameToSquadsMap.set(squad.name, squad);

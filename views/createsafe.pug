@@ -19,7 +19,7 @@ html
             div(class="name") Signers
             div(class="code")
                 each signer in signers
-                    p signer
+                    p=signer
         a(class="cta" href="#" onclick="createSafe()") CREATE SAFE
 script.
     var consensus = '#{consensus}';
